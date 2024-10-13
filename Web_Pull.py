@@ -3,88 +3,66 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 def scrape_website(url, components):
-    """
-    Scrapes specified components from the given URL.
-
-    Args:
-        url (str): The URL of the website to scrape.
-        components (list): The list of components to scrape.
-
-    Returns:
-        dict: A dictionary containing the scraped data.
-    """
+    # Send a GET request to the URL
     response = requests.get(url)
     
     if response.status_code != 200:
-        raise Exception(f"Failed to load the page. Status code: {response.status_code}")
+        print(f"Failed to retrieve content from {url}")
+        return None
 
+    # Parse the content using BeautifulSoup
     soup = BeautifulSoup(response.content, 'html.parser')
-    scraped_data = {}
 
-    if 'title' in components:
-        title = soup.title.string if soup.title else 'No title found'
-        scraped_data['title'] = title
+    # Initialize a dictionary to hold the scraped data
+    data = {component: [] for component in components}
 
-    if 'paragraphs' in components:
-        paragraphs = [p.get_text() for p in soup.find_all('p')]
-        scraped_data['paragraphs'] = paragraphs
+    # Scrape the selected components
+    if "title" in components:
+        title = soup.title.string if soup.title else "No title found"
+        data["title"].append(title)
 
-    if 'links' in components:
-        links = [a['href'] for a in soup.find_all('a', href=True)]
-        scraped_data['links'] = links
+    if "paragraph" in components:
+        paragraphs = soup.find_all('p')
+        for para in paragraphs:
+            data["paragraph"].append(para.get_text())
 
-    return scraped_data
+    if "header" in components:
+        headers = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+        for header in headers:
+            data["header"].append(header.get_text())
 
-def save_to_csv(data, filename):
-    """
-    Saves the scraped data to a CSV file.
-
-    Args:
-        data (dict): The data to save.
-        filename (str): The filename for the CSV file.
-    """
-    # Create a DataFrame from the data
-    df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in data.items()]))
-    df.to_csv(filename, index=False)
-    print(f"Data saved to {filename}")
+    return data
 
 def main():
-    print("Welcome to the Web Scraping Tool!")
+    print("Welcome to the Web Scraping Tool.")
+    
+    # Get URL from user
     url = input("Enter the URL of the website to scrape: ")
-
-    print("Select the components you want to scrape:")
-    print("1. Title")
-    print("2. Paragraphs")
-    print("3. Links")
-    print("4. All")
-
-    choice = input("Enter your choice (1/2/3/4): ")
-
-    components = []
-    if choice == '1':
-        components.append('title')
-    elif choice == '2':
-        components.append('paragraphs')
-    elif choice == '3':
-        components.append('links')
-    elif choice == '4':
-        components = ['title', 'paragraphs', 'links']
+    
+    # Ask the user for components to scrape
+    print("Which components would you like to scrape? (select multiple by comma):")
+    print("1. title")
+    print("2. paragraph")
+    print("3. header")
+    print("4. all")
+    
+    user_input = input("Enter your choice (e.g., title, paragraph, header, all): ").strip().lower()
+    
+    # Determine which components to scrape
+    if user_input == 'all':
+        components_to_scrape = ["title", "paragraph", "header"]
     else:
-        print("Invalid choice. Please select again.")
-        return
+        components_to_scrape = [comp.strip() for comp in user_input.split(",") if comp.strip() in ["title", "paragraph", "header"]]
 
     # Scrape the website
-    try:
-        scraped_data = scrape_website(url, components)
+    scraped_data = scrape_website(url, components_to_scrape)
+
+    if scraped_data:
+        # Convert to DataFrame for easy viewing and manipulation
+        df = pd.DataFrame(dict([(k, pd.Series(v)) for k,v in scraped_data.items()]))
         print("\nScraped Data:")
-        for component, content in scraped_data.items():
-            print(f"{component.capitalize()}: {content if isinstance(content, str) else len(content)} items found.")
+        print(df)
 
-        # Save to CSV
-        filename = input("Enter the filename to save the data (e.g., scraped_data.csv): ")
-        save_to_csv(scraped_data, filename)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
+# Run the program
 if __name__ == "__main__":
     main()
