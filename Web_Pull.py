@@ -33,6 +33,14 @@ def scrape_website(url, components):
 
     return data
 
+def save_to_csv(data):
+    # Convert to DataFrame for easy saving to CSV
+    df = pd.DataFrame(dict([(k, pd.Series(v)) for k,v in data.items()]))
+    
+    # Save DataFrame to a CSV file
+    df.to_csv('scraped_data.csv', index=False)
+    print("Data saved to 'scraped_data.csv'")
+
 def main():
     print("Welcome to the Web Scraping Tool.")
     
@@ -40,28 +48,35 @@ def main():
     url = input("Enter the URL of the website to scrape: ")
     
     # Ask the user for components to scrape
-    print("Which components would you like to scrape? (select multiple by comma):")
-    print("1. title")
-    print("2. paragraph")
-    print("3. header")
-    print("4. all")
+    print("Which components would you like to scrape? (select multiple by number):")
+    print("1. Title")
+    print("2. Paragraph")
+    print("3. Header")
+    print("4. All")
     
-    user_input = input("Enter your choice (e.g., title, paragraph, header, all): ").strip().lower()
+    user_input = input("Enter your choice (e.g., 1,2,3 or 4 for all): ").strip()
     
     # Determine which components to scrape
-    if user_input == 'all':
+    if user_input == '4':
         components_to_scrape = ["title", "paragraph", "header"]
     else:
-        components_to_scrape = [comp.strip() for comp in user_input.split(",") if comp.strip() in ["title", "paragraph", "header"]]
-
+        component_options = {
+            "1": "title",
+            "2": "paragraph",
+            "3": "header"
+        }
+        components_to_scrape = [component_options[num] for num in user_input.split(",") if num in component_options]
+    
     # Scrape the website
     scraped_data = scrape_website(url, components_to_scrape)
 
     if scraped_data:
-        # Convert to DataFrame for easy viewing and manipulation
-        df = pd.DataFrame(dict([(k, pd.Series(v)) for k,v in scraped_data.items()]))
         print("\nScraped Data:")
-        print(df)
+        for key, value in scraped_data.items():
+            print(f"{key.capitalize()}: {value}")
+
+        # Save to CSV
+        save_to_csv(scraped_data)
 
 # Run the program
 if __name__ == "__main__":
