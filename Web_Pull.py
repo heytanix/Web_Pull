@@ -33,13 +33,13 @@ def scrape_website(url, components):
 
     return data
 
-def save_to_csv(data):
+def save_to_csv(data, filename):
     # Convert to DataFrame for easy saving to CSV
     df = pd.DataFrame(dict([(k, pd.Series(v)) for k,v in data.items()]))
     
-    # Save DataFrame to a CSV file
-    df.to_csv('scraped_data.csv', index=False)
-    print("Data saved to 'scraped_data.csv'")
+    # Save DataFrame to a CSV file with the user-defined filename
+    df.to_csv(f'{filename}.csv', index=False)
+    print(f"Data saved to '{filename}.csv'")
 
 def main():
     print("Welcome to the Web Scraping Tool.")
@@ -75,8 +75,11 @@ def main():
         for key, value in scraped_data.items():
             print(f"{key.capitalize()}: {value}")
 
+        # Get the filename from the user
+        filename = input("Enter the filename to save the data (without extension): ").strip()
+
         # Save to CSV
-        save_to_csv(scraped_data)
+        save_to_csv(scraped_data, filename)
 
 # Run the program
 if __name__ == "__main__":
